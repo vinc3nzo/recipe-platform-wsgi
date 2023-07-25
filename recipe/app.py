@@ -25,10 +25,8 @@ def create_app(db_url: str, create_docs: bool = False) -> falcon.asgi.App:
     engine = new_engine(db_url)
     db_session = new_sessionmaker(engine)
 
-    init_db(engine)
-
     # Rest API Resources
-
+    
     user_resource = UserResource(db_session)
     recipe_resource = RecipeResource(db_session)
     auth_resource = AuthResource(db_session)
