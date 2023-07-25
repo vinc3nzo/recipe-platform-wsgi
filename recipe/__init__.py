@@ -1,0 +1,1 @@
+"""A backend for the recipe sharing platform"""
