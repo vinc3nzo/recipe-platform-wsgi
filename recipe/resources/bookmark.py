@@ -4,10 +4,9 @@ from falcon import Request, Response
 from sqlalchemy import select, func
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..response import GenericResponse, ERROR_RESPONSE
 from ..util import require_auth, pagination, serialize, require_fields
 from ..database.models import BookmarkedRecipe, Recipe, Status
-from ..database.validation import BookmarkedRecipeCreate
+from ..validation import BookmarkedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE
 from ..log import logging
 
 from uuid import UUID
@@ -43,12 +42,12 @@ class BookmarkResource:
                 query = select(func.count()).select_from(BookmarkedRecipe)
                 total_records: int = db.scalar(query)
 
-                resp.media = serialize(GenericResponse(value={
+                resp.media = serialize(ResponseWrapper(value={
                     'totalPages': math.ceil(total_records / elements),
                     'data': recipes
                 }))
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -63,14 +62,14 @@ class BookmarkResource:
                 existing_recipe = db.scalar(select(Recipe).where((Recipe.id == recipe_id) & (Recipe.status == Status.APPROVED)))
 
                 if existing_recipe is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['There is no recipe with such id. Probably, the recipe haven\'t been approved by the moderators yet.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['There is no recipe with such id. Probably, the recipe haven\'t been approved by the moderators yet.']))
                     resp.status = falcon.HTTP_404
                     return
 
                 existing_bookmark = db.scalar(select(BookmarkedRecipe)
                                               .where((BookmarkedRecipe.recipe_id == recipe_id) & (BookmarkedRecipe.user_id == user_id)))
                 if existing_bookmark is not None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['The bookmark is already added.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['The bookmark is already added.']))
                     resp.status = falcon.HTTP_200
                     return
 
@@ -84,10 +83,10 @@ class BookmarkResource:
                 db.add(bookmark)
                 db.commit()
         
-                resp.media = serialize(GenericResponse(value=None))
+                resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_201
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -102,16 +101,16 @@ class BookmarkResource:
                 bookmark = db.execute(select(BookmarkedRecipe)
                                     .where((BookmarkedRecipe.user_id == user_id) & (BookmarkedRecipe.recipe_id == recipe_id))).scalar()
                 if bookmark is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['Attempted to delete a non-existent bookmark.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['Attempted to delete a non-existent bookmark.']))
                     resp.status = falcon.HTTP_200
                     return
                 
                 db.delete(bookmark)
                 db.commit()
 
-                resp.media = serialize(GenericResponse(value=None))
+                resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_200
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)

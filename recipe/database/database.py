@@ -7,8 +7,7 @@ from .models import OrmBase
 
 def new_engine(url: str) -> Engine:
     return create_engine(
-        url,
-        connect_args={'check_same_thread': False}
+        url
     )
 
 def new_sessionmaker(engine: Engine):

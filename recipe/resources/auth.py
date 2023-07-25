@@ -5,13 +5,18 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import select
 
 from ..util import require_fields, serialize
-from ..response import GenericResponse, ERROR_RESPONSE
 from ..database.models import User, UserPassword, Authority
-from ..database.validation import UserPasswordCreate, UserCreate
+from ..docs import spec
+from ..validation import (
+    UserPasswordCreate, UserCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE,
+    LoginRequest, ErrorResponse, RegistrationRequest
+)
 from ..security import authorize_user
 from ..log import logging
 
 import bcrypt
+
+from spectree import Response as SpecResponse
 
 class AuthResource:
 
@@ -20,48 +25,55 @@ class AuthResource:
     def __init__(self, db_sessionmaker: sessionmaker[Session]):
         self.db_session = db_sessionmaker
 
-    @falcon.before(require_fields, ['username', 'password'])
+    @spec.validate(
+        resp=SpecResponse(HTTP_200=(ResponseWrapper, 'login successful'), HTTP_401=(ErrorResponse, 'credentials are incorrect'), HTTP_404=(ErrorResponse, 'user not found'), HTTP_500=ErrorResponse),
+        json=LoginRequest,
+        security={}
+    )
     def on_post_login(self, req: Request, resp: Response):
         try:
-            username: str = req.context.body['username']
-            password: str = req.context.body['password']
+            username: str = req.context.json.username
+            password: str = req.context.json.password
 
             with self.db_session() as db:
                 user = db.execute(select(User).where(User.username == username)).scalar()
                 if user is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['No user with such username was found.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['No user with such username was found.']))
                     resp.status = falcon.HTTP_404
                     return
                 
                 user_password = db.execute(select(UserPassword).where(UserPassword.user_id == user.id)).scalar()
 
                 if not bcrypt.checkpw(password.encode('utf-8'), user_password.hashed_password):
-                    resp.media = serialize(GenericResponse(value=None, errors=['The password is incorrect.']))
-                    resp.status = falcon.HTTP_403
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['The password is incorrect.']))
+                    resp.status = falcon.HTTP_401
                     return
             
                 token = authorize_user(user.id, user.role)
 
-                resp.media = serialize(GenericResponse(value={'token': token}))
+                resp.media = serialize(ResponseWrapper(value={'token': token}))
                 resp.status = falcon.HTTP_200
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
     
-
-    @falcon.before(require_fields, ['username', 'password', 'first_name', 'last_name'])
+    @spec.validate(
+        resp=SpecResponse(HTTP_200=(ErrorResponse, 'username is already taken'), HTTP_201=(ResponseWrapper, 'user successfully registered'), HTTP_500=ErrorResponse),
+        json=RegistrationRequest,
+        security={}
+    )
     def on_post_register(self, req: Request, resp: Response):
         try:
-            username: str = req.context.body['username']
-            password: str = req.context.body['password']
-            first_name: str = req.context.body['first_name']
-            last_name: str = req.context.body['last_name']
+            username: str = req.context.json.username
+            password: str = req.context.json.password
+            first_name: str = req.context.json.first_name
+            last_name: str = req.context.json.last_name
 
             with self.db_session() as db:
                 user = db.execute(select(User).where(User.username == username)).scalar()
                 if user is not None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['This username is already taken.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['This username is already taken.']))
                     resp.status = falcon.HTTP_200
                     return
                 
@@ -91,10 +103,10 @@ class AuthResource:
                 db.add(user_password)
                 db.commit()
 
-                resp.media = serialize(GenericResponse(value=None))
+                resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_201
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 

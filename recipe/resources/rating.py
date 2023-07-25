@@ -6,9 +6,8 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from uuid import UUID
 
-from ..response import GenericResponse, ERROR_RESPONSE
 from ..database.models import RatedRecipe, Recipe
-from ..database.validation import RatedRecipeCreate
+from ..validation import RatedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE
 from ..util import require_auth, serialize, require_fields
 from ..log import logging
 
@@ -26,11 +25,11 @@ class RatingResource:
                 recipe = db.scalar(select(Recipe).where(Recipe.id == _id))
 
                 if recipe is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['There is no recipe with such id.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['There is no recipe with such id.']))
                     resp.status = falcon.HTTP_404
                     return
                 
-                resp.media = serialize(GenericResponse(
+                resp.media = serialize(ResponseWrapper(
                     value={
                         'rating': recipe.rating
                     }
@@ -38,7 +37,7 @@ class RatingResource:
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
     
@@ -53,7 +52,7 @@ class RatingResource:
                 recipe = db.scalar(select(Recipe).where(Recipe.id == _id))
 
                 if recipe is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['There is no recipe with such id.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['There is no recipe with such id.']))
                     resp.status = falcon.HTTP_404
                     return
                 
@@ -61,7 +60,7 @@ class RatingResource:
                                             .where((RatedRecipe.recipe_id == _id) & (RatedRecipe.user_id == user_id)))
 
                 if score < 1 or score > 5:
-                    resp.media = serialize(GenericResponse(value=None, errors=['The score must be a float value in range [1; 5].']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['The score must be a float value in range [1; 5].']))
                     resp.status = falcon.HTTP_400
                     return
                 
@@ -83,10 +82,10 @@ class RatingResource:
                 db.add(recipe)
                 db.commit()
 
-                resp.media = serialize(GenericResponse(value=None))
+                resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)

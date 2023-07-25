@@ -16,7 +16,7 @@ if config.config_file_name is not None:
 
 # check if the database exists
 from recipe.database.database import validate_db_presence
-validate_db_presence('postgresql+psycopg2://postgres:1234@localhost:5432/recipes')
+validate_db_presence('postgresql+psycopg2://postgres:1234@localhost:5432/recipe-wsgi')
 
 # add your model's MetaData object here
 # for 'autogenerate' support

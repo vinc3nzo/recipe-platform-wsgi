@@ -9,7 +9,7 @@ import jwt
 import os
 
 from .database.models import Authority
-from .response import GenericResponse
+from .validation import ResponseWrapper
 
 def serialize(obj: object) -> list | dict[str, dict | list | str | int | float | None]:
     """Convert any complex Python object into its
@@ -70,7 +70,7 @@ def require_fields(req: Request, resp: Response, resource, params, required: lis
 
 def handle_fields_missing(req: Request, resp: Response, ex: FieldsMissing, params):
     resp.status = falcon.HTTP_400
-    resp.media = serialize(GenericResponse(
+    resp.media = serialize(ResponseWrapper(
         value=None,
         errors=[
             'The following fields are required: '
@@ -79,38 +79,43 @@ def handle_fields_missing(req: Request, resp: Response, ex: FieldsMissing, param
         ]
     ))
 
-class AccessDenied(falcon.HTTPForbidden):
+class Unauthorized(falcon.HTTPForbidden):
     reason: str
 
     def __init__(self, reason: str):
         self.reason = reason
 
 def require_auth(req: Request, resp: Response, resource, params, allowed_authorities: int = Authority.USER):
-    key_header: str | None = req.get_header('X-Auth-Token')
-    if key_header is None:
-        raise AccessDenied('use the `X-Auth-Token` header to pass the authorization token')
+    auth_header: str | None = req.auth
+    if auth_header is None:
+        raise Unauthorized('use the `Authorization` header to pass the authorization token')
     
-    if len(key_header.split()) != 1:
-        raise AccessDenied('the format of `X-Auth-Token` header is invalid')
+    split = auth_header.split()
+    if len(split) != 2 or split[0].lower() != 'bearer':
+        raise Unauthorized('the format of `Authorization` header is invalid')
 
-    token = key_header.strip()
+    token = split[1].strip()
     secret = os.environ.get('APP_SECRET')
 
     try:
         payload = jwt.decode(token, secret, algorithms=['HS256'])
     except jwt.ExpiredSignatureError:
-        raise AccessDenied('the authorization token has expired. Please, authorize again')
+        raise Unauthorized('the authorization token has expired. Please, authorize again')
     except Exception:
-        raise AccessDenied('there was an error verifying the authorization token')
+        raise Unauthorized('there was an error verifying the authorization token')
     
     if payload['role'] & allowed_authorities:
         req.context.user_id = UUID(payload['user_id'])
     else:
-        raise AccessDenied('you are not allowed to perform this operation')
+        resp.media = serialize(ResponseWrapper(
+            value=None,
+            errors=['you are not allowed to perform this operation']
+        ))
+        resp.status = falcon.HTTP_403
 
-def handle_access_denied(req: Request, resp: Response, ex: AccessDenied, params):
-    resp.status = falcon.HTTP_403
-    resp.media = serialize(GenericResponse(
+def handle_unauthorized(req: Request, resp: Response, ex: Unauthorized, params):
+    resp.status = falcon.HTTP_401
+    resp.media = serialize(ResponseWrapper(
         value=None,
         errors=[
             'Authorization failed. Reason: ' + ex.reason + '.'
@@ -118,6 +123,7 @@ def handle_access_denied(req: Request, resp: Response, ex: AccessDenied, params)
     ))
 
 DEFAULT_PAGE_SIZE: int = 20
+MAX_PAGE_SIZE: int = 50
 
 class PaginationError(falcon.HTTPBadRequest):
     msgs: list[str]
@@ -127,7 +133,7 @@ class PaginationError(falcon.HTTPBadRequest):
 
 def handle_pagination_error(req: Request, resp: Response, ex: PaginationError, params):
     resp.status = falcon.HTTP_400
-    resp.media = serialize(GenericResponse(
+    resp.media = serialize(ResponseWrapper(
         value=None,
         errors=ex.msgs
     ))
@@ -150,8 +156,8 @@ def pagination(req: Request, resp: Response, resource, params):
         except Exception:
             errors.append('There was an error parsing the `page` parameter.')
 
-        if elements < 1:
-            errors.append('The `elements` parameter must be a positive integer.')
+        if elements < 1 or elements > MAX_PAGE_SIZE:
+            errors.append(f'The `elements` parameter must be a positive integer, less than or equal to {MAX_PAGE_SIZE}')
 
         if page < 1:
             errors.append('The `page` parameter must be a positive integer.')

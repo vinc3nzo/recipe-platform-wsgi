@@ -1,8 +1,8 @@
 """Database schema creation
 
-Revision ID: ff74b94b24e2
+Revision ID: b15971593416
 Revises: 
-Create Date: 2023-07-25 18:15:27.081305
+Create Date: 2023-07-25 20:52:55.398522
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ff74b94b24e2'
+revision = 'b15971593416'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,6 +21,7 @@ def upgrade() -> None:
     op.create_table('bookmarked_recipes',
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('recipe_id', sa.Uuid(), nullable=False),
+    sa.Column('date_added', sa.Float(), nullable=False),
     sa.PrimaryKeyConstraint('user_id', 'recipe_id')
     )
     op.create_table('rated_recipes',

@@ -5,10 +5,10 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import sessionmaker, Session
 
 from ..util import pagination, require_auth, serialize, require_fields
-from ..response import ERROR_RESPONSE, GenericResponse, RecipeData
+from ..validation import RecipeData, INTERNAL_ERROR_RESPONSE, ResponseWrapper
 
 from ..database.models import Recipe, Tag, RecipesTags, Status, Authority, BookmarkedRecipe, RatedRecipe
-from ..database.validation import RecipeCreate, TagCreate, RecipesTagsCreate, StatusChange
+from ..validation import RecipeCreate, TagCreate, RecipesTagsCreate, StatusChange
 
 from ..log import logging
 
@@ -53,14 +53,14 @@ class RecipeResource:
                 query = select(func.count()).select_from(Recipe).where(Recipe.status == Status.APPROVED)
                 total_records: int = db.scalar(query)
 
-                resp.media = serialize(GenericResponse(value={
+                resp.media = serialize(ResponseWrapper(value={
                     'totalPages': math.ceil(total_records / elements),
                     'data': res_data
                 }))
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -107,11 +107,11 @@ class RecipeResource:
                             db.commit()
 
                 resp.location = f'/recipe/{recipe_id}'
-                resp.media = serialize(GenericResponse(value=None))
+                resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_201
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -125,7 +125,7 @@ class RecipeResource:
                 recipe = result.scalar()
 
                 if recipe is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['No recipe with such id was found.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['No recipe with such id was found.']))
                     resp.status = falcon.HTTP_404
                     return
                 
@@ -134,7 +134,7 @@ class RecipeResource:
                 rating_record = db.scalar(select(RatedRecipe)
                                            .where((RatedRecipe.user_id == user_id) & (RatedRecipe.recipe_id == recipe.id)))
 
-                resp.media = serialize(GenericResponse(value=RecipeData(
+                resp.media = serialize(ResponseWrapper(value=RecipeData(
                     recipe,
                     bookmark_record is not None,
                     rating_record.score if rating_record is not None else None
@@ -142,7 +142,7 @@ class RecipeResource:
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -156,7 +156,7 @@ class RecipeResource:
                 recipe = db.scalar(select(Recipe).where(Recipe.id == _id))
 
                 if recipe is None:
-                    resp.media = serialize(GenericResponse(value=None, errors=['No recipe with such id was found.']))
+                    resp.media = serialize(ResponseWrapper(value=None, errors=['No recipe with such id was found.']))
                     resp.status = falcon.HTTP_404
                     return
 
@@ -172,7 +172,7 @@ class RecipeResource:
                 rating_record = db.scalar(select(RatedRecipe)
                                           .where((RatedRecipe.user_id == user_id) & (RatedRecipe.recipe_id == recipe.id)))
 
-                resp.media = serialize(GenericResponse(value=RecipeData(
+                resp.media = serialize(ResponseWrapper(value=RecipeData(
                     recipe,
                     bookmark_record is not None,
                     rating_record.score if rating_record is not None else None
@@ -180,7 +180,7 @@ class RecipeResource:
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -196,7 +196,7 @@ class RecipeResource:
             tags = search_query.split()
 
             if len(tags) == 0:
-                resp.media = serialize(ERROR_RESPONSE)
+                resp.media = serialize(INTERNAL_ERROR_RESPONSE)
                 resp.status = falcon.HTTP_500
                 return
 
@@ -233,14 +233,14 @@ class RecipeResource:
                 query = select(func.count()).select_from(Recipe).where(Recipe.id.in_(recipe_ids) & (Recipe.status == Status.APPROVED))
                 total_records: int = db.scalar(query)
 
-                resp.media = serialize(GenericResponse(value={
+                resp.media = serialize(ResponseWrapper(value={
                     'totalPages': math.ceil(total_records / elements),
                     'data': res_data
                 }))
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
@@ -275,13 +275,13 @@ class RecipeResource:
                 query = select(func.count()).select_from(Recipe).where(Recipe.author_id == user_id)
                 total_records: int = db.scalar(query)
 
-                resp.media = serialize(GenericResponse(value={
+                resp.media = serialize(ResponseWrapper(value={
                     'totalPages': math.ceil(total_records / elements),
                     'data': res_data
                 }))
                 resp.status = falcon.HTTP_200             
             
         except Exception as e:
-            resp.media = serialize(ERROR_RESPONSE)
+            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
             resp.status = falcon.HTTP_500
             logging.exception(e)

@@ -4,7 +4,10 @@ from typing import Any
 from uuid import UUID, uuid4
 from datetime import datetime
 
-from .validation import UserCreate, RecipeCreate, TagCreate, BookmarkedRecipeCreate, RatedRecipeCreate, RecipesTagsCreate, UserPasswordCreate
+from ..validation import (
+    UserCreate, RecipeCreate, TagCreate, BookmarkedRecipeCreate,
+    RatedRecipeCreate, RecipesTagsCreate, UserPasswordCreate
+)
 
 # SQLAlchemy ORM models
 
