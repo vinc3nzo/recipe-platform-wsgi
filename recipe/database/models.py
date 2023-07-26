@@ -35,6 +35,16 @@ class User(OrmBase):
         self.last_name = c.last_name
         self.date_registered = datetime.now().timestamp()
         self.role = c.role or Authority.USER
+    
+    def serialize(self) -> dict[str, Any]:
+        return {
+            'id': str(self.id),
+            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'date_registered': self.date_registered,
+            'role': self.role
+        }
 
 class Status:
     DENIED: int = 0
@@ -59,6 +69,17 @@ class Recipe(OrmBase):
         self.date_edited = datetime.now().timestamp()
         self.rating = 0
         self.status = Status.PENDING
+
+    def serialize(self) -> dict[str, Any]:
+        return {
+            'id': str(self.id),
+            'source': self.source,
+            'author_id': str(self.author_id),
+            'date_created': self.date_created,
+            'date_edited': self.date_edited,
+            'rating': self.rating,
+            'status': self.status
+        }
 
 class Tag(OrmBase):
     __tablename__ = 'tags'

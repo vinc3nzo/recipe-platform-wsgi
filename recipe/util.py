@@ -85,7 +85,13 @@ class Unauthorized(falcon.HTTPForbidden):
     def __init__(self, reason: str):
         self.reason = reason
 
-def require_auth(req: Request, resp: Response, resource, params, allowed_authorities: int = Authority.USER):
+class AccessDenied(falcon.HTTPForbidden):
+    reason: str
+
+    def __init__(self, reason: str):
+        self.reason = reason
+
+def check_auth(req: Request, resp: Response, resource, params, allowed_authorities: int = Authority.USER | Authority.MODERATOR | Authority.ADMIN):
     auth_header: str | None = req.auth
     if auth_header is None:
         raise Unauthorized('use the `Authorization` header to pass the authorization token')
@@ -103,24 +109,29 @@ def require_auth(req: Request, resp: Response, resource, params, allowed_authori
         raise Unauthorized('the authorization token has expired. Please, authorize again')
     except Exception:
         raise Unauthorized('there was an error verifying the authorization token')
-    
+
     if payload['role'] & allowed_authorities:
         req.context.user_id = UUID(payload['user_id'])
     else:
-        resp.media = serialize(ResponseWrapper(
-            value=None,
-            errors=['you are not allowed to perform this operation']
-        ))
-        resp.status = falcon.HTTP_403
+        raise AccessDenied('You are not allowed to perform this operation.')
 
 def handle_unauthorized(req: Request, resp: Response, ex: Unauthorized, params):
     resp.status = falcon.HTTP_401
-    resp.media = serialize(ResponseWrapper(
-        value=None,
-        errors=[
+    resp.media = {
+        'value': None,
+        'errors': [
             'Authorization failed. Reason: ' + ex.reason + '.'
         ]
-    ))
+    }
+
+def handle_access_denied(req: Request, resp: Response, ex: AccessDenied, params):
+    resp.status = falcon.HTTP_403
+    resp.media = {
+        'value': None,
+        'errors': [
+            'Access denied. Reason: ' + ex.reason + '.'
+        ]
+    }
 
 DEFAULT_PAGE_SIZE: int = 20
 MAX_PAGE_SIZE: int = 50

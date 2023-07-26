@@ -8,7 +8,7 @@ from uuid import UUID
 
 from ..database.models import RatedRecipe, Recipe
 from ..validation import RatedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE
-from ..util import require_auth, serialize, require_fields
+from ..util import check_auth, serialize, require_fields
 from ..log import logging
 
 class RatingResource:
@@ -18,7 +18,7 @@ class RatingResource:
     def __init__(self, db_sessionmaker: sessionmaker[Session]):
         self.db_session = db_sessionmaker
 
-    @falcon.before(require_auth)
+    @falcon.before(check_auth)
     def on_get(self, req: Request, resp: Response, _id: UUID):
         try:
             with self.db_session() as db:
@@ -37,11 +37,11 @@ class RatingResource:
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)
     
-    @falcon.before(require_auth)
+    @falcon.before(check_auth)
     @falcon.before(require_fields, ['score'])
     def on_post(self, req: Request, resp: Response, _id: UUID):
         try:
@@ -86,6 +86,6 @@ class RatingResource:
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)

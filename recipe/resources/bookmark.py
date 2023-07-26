@@ -4,7 +4,7 @@ from falcon import Request, Response
 from sqlalchemy import select, func
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..util import require_auth, pagination, serialize, require_fields
+from ..util import check_auth, pagination, serialize, require_fields
 from ..database.models import BookmarkedRecipe, Recipe, Status
 from ..validation import BookmarkedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE
 from ..log import logging
@@ -20,7 +20,7 @@ class BookmarkResource:
     def __init__(self, db_sessionmaker: sessionmaker[Session]):
         self.db_session = db_sessionmaker
 
-    @falcon.before(require_auth)
+    @falcon.before(check_auth)
     @falcon.before(pagination)
     def on_get(self, req: Request, resp: Response):
         try:
@@ -47,11 +47,11 @@ class BookmarkResource:
                     'data': recipes
                 }))
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
-    @falcon.before(require_auth)
+    @falcon.before(check_auth)
     @falcon.before(require_fields, ['recipe_id'])
     def on_post(self, req: Request, resp: Response):
         try:
@@ -86,11 +86,11 @@ class BookmarkResource:
                 resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_201
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)
 
-    @falcon.before(require_auth)
+    @falcon.before(check_auth)
     @falcon.before(require_fields, ['recipe_id'])
     def on_delete(self, req: Request, resp: Response):
         try:
@@ -111,6 +111,6 @@ class BookmarkResource:
                 resp.media = serialize(ResponseWrapper(value=None))
                 resp.status = falcon.HTTP_200
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)

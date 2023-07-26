@@ -1,6 +1,6 @@
 from spectree import SpecTree, SecurityScheme
 
-spec = SpecTree(
+api = SpecTree(
     'falcon',
     title='Recipe Sharing Platform API',
     version='0.0.1',

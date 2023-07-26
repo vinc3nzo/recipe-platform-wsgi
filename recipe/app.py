@@ -8,7 +8,10 @@ from .resources.rating import RatingResource
 
 from .database.database import new_engine, new_sessionmaker
 
-from .util import handle_fields_missing, FieldsMissing, handle_unauthorized, Unauthorized, handle_pagination_error, PaginationError
+from .util import (
+    handle_fields_missing, FieldsMissing, handle_unauthorized, Unauthorized,
+    handle_pagination_error, PaginationError, AccessDenied, handle_access_denied
+)
 from .security import get_admin_token
 
 from .log import logging
@@ -40,6 +43,7 @@ def create_app(db_url: str) -> falcon.asgi.App:
     app.add_error_handler(FieldsMissing, handle_fields_missing)
     app.add_error_handler(Unauthorized, handle_unauthorized)
     app.add_error_handler(PaginationError, handle_pagination_error)
+    app.add_error_handler(AccessDenied, handle_access_denied)
 
     app.add_route('/user', user_resource) # GET
     app.add_route('/user/{_id:uuid}', user_resource, suffix='by_id') # GET
@@ -48,6 +52,8 @@ def create_app(db_url: str) -> falcon.asgi.App:
     app.add_route('/recipe/{_id:uuid}', recipe_resource, suffix='by_id') # GET, PATCH[MODERATOR, ADMIN]
     app.add_route('/recipe/search', recipe_resource, suffix='by_tags') # GET
     app.add_route('/recipe/my', recipe_resource, suffix='my') # GET
+    app.add_route('/recipe/pending', recipe_resource, suffix='pending') # GET[MODERATOR, ADMIN]
+    app.add_route('/recipe/deined', recipe_resource, suffix='denied') # GET[MODERATOR, ADMIN]
 
     app.add_route('/recipe/{_id:uuid}/rating', rating_resource) # GET, POST
 
@@ -64,6 +70,6 @@ logging.debug(get_admin_token())
 
 app = create_app('postgresql+psycopg2://postgres:1234@localhost:5432/recipe-wsgi')
 
-from .docs import spec
+from .spec import api
 
-spec.register(app)
+api.register(app)
