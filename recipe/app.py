@@ -56,6 +56,7 @@ def create_app(db_url: str) -> falcon.asgi.App:
     app.add_route('/recipe/deined', recipe_resource, suffix='denied') # GET[MODERATOR, ADMIN]
 
     app.add_route('/recipe/{_id:uuid}/rating', rating_resource) # GET, POST
+    app.add_route('/recipe/{_id:uuid}/bookmark', bookmark_resource, suffix='bookmark') # POST, DELETE
 
     app.add_route('/bookmark', bookmark_resource) # GET, POST, DELETE
 
@@ -66,10 +67,11 @@ def create_app(db_url: str) -> falcon.asgi.App:
 
 load_dotenv()
 
+logging.debug('Virtual admin user for this session:')
 logging.debug(get_admin_token())
+logging.debug('Please, note that this is not a real database user, and it is only a signed JWT for the user with max priveleges.')
 
 app = create_app('postgresql+psycopg2://postgres:1234@localhost:5432/recipe-wsgi')
 
 from .spec import api
-
 api.register(app)

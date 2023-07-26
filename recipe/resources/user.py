@@ -31,7 +31,12 @@ class UserResource:
 
     @api.validate(
         query=PaginationParams,
-        resp=SpecResponse(HTTP_200=PaginatedUserResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse)
+        resp=SpecResponse(
+            HTTP_200=PaginatedUserResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        )
     )
     @falcon.before(check_auth)
     def on_get(self, req: Request, resp: Response):
@@ -61,7 +66,13 @@ class UserResource:
 
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=UserResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_404=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=UserResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         path_parameter_descriptions={
             '_id': 'A UUID that corresponds to a user.'
         }

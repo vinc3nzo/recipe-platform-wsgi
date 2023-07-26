@@ -31,7 +31,12 @@ class RecipeResource:
         self.db_session = db_sessionmaker
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=PaginatedRecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=PaginatedRecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         query=PaginationParams
     )
     @falcon.before(check_auth)
@@ -85,7 +90,12 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_201=ResponseWrapper, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_201=ResponseWrapper,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         json=RecipeAddRequest
     )
     @falcon.before(check_auth)
@@ -144,7 +154,13 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=RecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_404=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=RecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         path_parameter_descriptions={
             '_id': 'A UUID that corresponds to a recipe.'
         }
@@ -193,7 +209,13 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=RecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_404=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=RecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         json=RecipeChangeStatusRequest,
         path_parameter_descriptions={
             '_id': 'A UUID that corresponds to a recipe.'
@@ -250,7 +272,12 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=PaginatedRecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=PaginatedRecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         query=RecipeSearchRequest
     )
     @falcon.before(check_auth)
@@ -321,7 +348,12 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=PaginatedRecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=PaginatedRecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         query=PaginationParams
     )
     @falcon.before(check_auth)
@@ -374,7 +406,12 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=PaginatedRecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=PaginatedRecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         query=PaginationParams
     )
     @falcon.before(check_auth, Authority.MODERATOR | Authority.ADMIN)
@@ -428,7 +465,12 @@ class RecipeResource:
             logging.exception(e)
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=PaginatedRecipeResponse, HTTP_401=ErrorResponse, HTTP_403=ErrorResponse, HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=PaginatedRecipeResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
         query=PaginationParams
     )
     @falcon.before(check_auth, Authority.MODERATOR | Authority.ADMIN)

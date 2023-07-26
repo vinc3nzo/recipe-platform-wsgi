@@ -90,7 +90,6 @@ INTERNAL_ERROR_RESPONSE = {
     'errors': ['Something really bad just happened...']
 }
 
-
 # Pagination
 
 class PaginationParams(BaseModel):
@@ -183,3 +182,15 @@ class RegistrationRequest(BaseModel):
 
 class AuthorizationHeader(BaseModel):
     Authorization: str
+
+# Rating
+
+class RatingRequest(BaseModel):
+    score: float = Field(ge=1, le=5)
+
+class RatingResponseValue(BaseModel):
+    rating: float = Field(ge=0, le=5)
+
+class RatingResponse(BaseModel):
+    value: RatingResponseValue
+    errors: list[str] | None

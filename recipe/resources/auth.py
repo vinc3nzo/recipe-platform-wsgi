@@ -26,7 +26,12 @@ class AuthResource:
         self.db_session = db_sessionmaker
 
     @api.validate(
-        resp=SpecResponse(HTTP_200=(ResponseWrapper, 'login successful'), HTTP_401=(ErrorResponse, 'credentials are incorrect'), HTTP_404=(ErrorResponse, 'user not found'), HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=(ResponseWrapper, 'login successful'),
+            HTTP_401=(ErrorResponse, 'credentials are incorrect'),
+            HTTP_404=(ErrorResponse, 'user not found'),
+            HTTP_500=ErrorResponse
+        ),
         json=LoginRequest,
         security={}
     )
@@ -68,7 +73,11 @@ class AuthResource:
             logging.exception(e)
     
     @api.validate(
-        resp=SpecResponse(HTTP_200=(ErrorResponse, 'username is already taken'), HTTP_201=(ResponseWrapper, 'user successfully registered'), HTTP_500=ErrorResponse),
+        resp=SpecResponse(
+            HTTP_200=(ErrorResponse, 'username is already taken'),
+            HTTP_201=(ResponseWrapper, 'user successfully registered'),
+            HTTP_500=ErrorResponse
+        ),
         json=RegistrationRequest,
         security={}
     )
