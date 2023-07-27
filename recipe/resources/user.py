@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from ..util import check_auth, serialize
 
-from ..database.models import User
+from ..database.models import User, Authority
 
 from ..log import logging
 from ..spec import api
@@ -91,6 +91,48 @@ class UserResource:
                     }
                     resp.status = falcon.HTTP_404
                     return
+
+                resp.media = {
+                    'value': user.serialize(),
+                    'errors': None
+                }
+                resp.status = falcon.HTTP_200
+
+        except Exception as e:
+            resp.media = INTERNAL_ERROR_RESPONSE
+            resp.status = falcon.HTTP_500
+            logging.exception(e)
+
+    @api.validate(
+        resp=SpecResponse(
+            HTTP_200=UserResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
+        path_parameter_descriptions={
+            '_id': 'A UUID that corresponds to a user.'
+        }
+    )
+    @falcon.before(check_auth, Authority.ADMIN)
+    def on_patch_by_id(self, req: Request, resp: Response, _id: UUID):
+        try:
+            with self.db_session() as db:
+                result = db.execute(select(User).where(User.id == _id))
+                user = result.scalar()
+
+                if user is None:
+                    resp.media = {
+                        'value': None,
+                        'errors': ['No user with such id was found.']
+                    }
+                    resp.status = falcon.HTTP_404
+                    return
+
+                user.role = user.role | Authority.MODERATOR
+                db.add(user)
+                db.commit(user)
 
                 resp.media = {
                     'value': user.serialize(),
