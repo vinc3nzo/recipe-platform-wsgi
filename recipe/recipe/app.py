@@ -20,7 +20,6 @@ import os
 from dotenv import load_dotenv
 
 def create_app(db_url: str) -> falcon.asgi.App:
-
     if os.environ.get('APP_SECRET') is None:
         raise Exception('Please, set the `APP_SECRET` environment variable. You may use the `.env` file for your convenience.')
 
