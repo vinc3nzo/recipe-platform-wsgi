@@ -32,6 +32,9 @@ else:
     from pydantic import BaseModel, Field, constr
 
 from uuid import UUID
+from datetime import datetime
+
+import falcon
 
 DEFAULT_PAGE_SIZE: int = 20
 MAX_PAGE_SIZE: int = 50
@@ -71,6 +74,11 @@ class UserPasswordCreate(BaseModel):
     user_id: UUID
     hashed_password: bytes
 
+class ImageCreate(BaseModel):
+    image_id: UUID
+    recipe_id: UUID
+    size: int
+
 # Request and response models (for `spectree`)
 
 from typing import Any
@@ -103,7 +111,7 @@ class UserData(BaseModel):
     username: str
     first_name: str
     last_name: str
-    date_registered: float
+    date_registered: str
     role: int
 
 class PaginatedUserResponseValue(BaseModel):
@@ -124,8 +132,8 @@ class RecipeData(BaseModel):
     id: UUID
     source: str
     author_id: UUID
-    date_created: float
-    date_edited: float
+    date_created: datetime
+    date_edited: datetime
     rating: float
     status: int
     bookmarked: bool
@@ -136,8 +144,8 @@ class RecipeData(BaseModel):
             'id': str(self.id),
             'source': self.source,
             'author_id': str(self.author_id),
-            'date_created': self.date_created,
-            'date_edited': self.date_edited,
+            'date_created': falcon.dt_to_http(self.date_created),
+            'date_edited': falcon.dt_to_http(self.date_edited),
             'rating': self.rating,
             'status': self.status,
             'bookmarked': self.bookmarked,

@@ -5,8 +5,10 @@ from .resources.recipe import RecipeResource
 from .resources.auth import AuthResource
 from .resources.bookmark import BookmarkResource
 from .resources.rating import RatingResource
+from .resources.image import ImageResource, ImageStore
 
 from .database.database import new_engine, new_sessionmaker
+from .database.models import ImageConfig
 
 from .util import (
     handle_fields_missing, FieldsMissing, handle_unauthorized, Unauthorized,
@@ -36,6 +38,10 @@ def create_app(db_url: str) -> falcon.asgi.App:
     bookmark_resource = BookmarkResource(db_session)
     rating_resource = RatingResource(db_session)
 
+    image_config = ImageConfig()
+    image_store = ImageStore(db_session, image_config)
+    image_resource = ImageResource(image_config, image_store)
+
     # Create Falcon application
 
     app = falcon.App()
@@ -57,6 +63,9 @@ def create_app(db_url: str) -> falcon.asgi.App:
 
     app.add_route('/recipe/{_id:uuid}/rating', rating_resource) # GET, POST
     app.add_route('/recipe/{_id:uuid}/bookmark', bookmark_resource, suffix='bookmark') # POST, DELETE
+
+    app.add_route('/recipe/{recipe_id:uuid}/image', image_resource) # GET, POST
+    app.add_route('/recipe/{recipe_id:uuid}/image/{image_id:uuid}', image_resource, suffix='image') # GET
 
     app.add_route('/bookmark', bookmark_resource) # GET, POST, DELETE
 

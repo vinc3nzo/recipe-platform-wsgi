@@ -4,7 +4,7 @@ from falcon import Request, Response
 from sqlalchemy import select, func
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..util import check_auth, serialize
+from ..util import check_auth
 
 from ..database.models import User
 

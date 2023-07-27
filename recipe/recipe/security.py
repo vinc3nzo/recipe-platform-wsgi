@@ -12,7 +12,7 @@ def get_admin_token() -> str:
     payload = {
         'user_id': str(uuid4()),
         'role': Authority.ADMIN,
-        'exp': datetime.now() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
+        'exp': datetime.utcnow() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
     }
 
     secret: str = os.environ.get('APP_SECRET')
@@ -24,7 +24,7 @@ def authorize_user(id: UUID, role: int) -> str:
     payload = {
         'user_id': str(id),
         'role': role,
-        'exp': datetime.now() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
+        'exp': datetime.utcnow() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
     }
 
     secret: str = os.environ.get('APP_SECRET')
