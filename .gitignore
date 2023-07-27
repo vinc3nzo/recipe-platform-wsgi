@@ -4,4 +4,3 @@ __pycache__
 db
 .vscode
 alembic.ini
-alembic
