@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 
 def create_app(db_url: str) -> falcon.asgi.App:
 
-    if os.environ.get('APP_SECRET') is None:
-        raise Exception('Please, set the `APP_SECRET` environment variable. You may use the `.env` file for your convenience.')
+    if os.environ.get('RECIPE_APP_SECRET') is None:
+        raise Exception('Please, set the `RECIPE_APP_SECRET` environment variable. You may use the `.env` file for your convenience.')
 
     # Database initialization
     engine = new_engine(db_url)
@@ -71,7 +71,14 @@ logging.debug('Virtual admin user for this session:')
 logging.debug(get_admin_token())
 logging.debug('Please, note that this is not a real database user, and it is only a signed JWT for the user with max priveleges.')
 
-app = create_app('postgresql+psycopg2://postgres:1234@localhost:5432/recipe-wsgi')
+db_password = os.environ.get('RECIPE_DATABASE_PASSWORD')
+if db_password is None:
+    raise Exception('Please, set the `RECIPE_DATABASE_PASSWORD` environment variable. You may use the `.env` file for your convenience.')
+
+db_user = os.environ.get('RECIPE_DATABASE_USER', 'postgres')
+db_database_name = os.environ.get('RECIPE_DATABASE_NAME', 'recipe-wsgi')
+
+app = create_app(f'postgresql+psycopg2://{db_user}:{db_password}@localhost:5432/{db_database_name}')
 
 from .spec import api
 api.register(app)
