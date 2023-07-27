@@ -75,19 +75,28 @@ class UserPasswordCreate(BaseModel):
 
 from typing import Any
 
+# Common
+
 class ResponseWrapper(BaseModel):
     value: Any
     errors: list[str] | None = None
 
-INTERNAL_ERROR_RESPONSE = ResponseWrapper(value=None, errors=['Something really bad just happened...'])
+class ErrorResponse(BaseModel):
+    value: None
+    errors: list[str]
+
+INTERNAL_ERROR_RESPONSE = {
+    'value': None,
+    'errors': ['Something really bad just happened...']
+}
+
+# Pagination
 
 class PaginationParams(BaseModel):
     page: int | None = Field(default=1, ge=1)
-    elements: int | None = Field(default=1, ge=1, le=MAX_PAGE_SIZE)
+    elements: int | None = Field(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE)
 
-class PaginatedResponse(BaseModel):
-    totalPages: int
-    data: list[Any]
+# User
 
 class UserData(BaseModel):
     id: UUID
@@ -96,6 +105,20 @@ class UserData(BaseModel):
     last_name: str
     date_registered: float
     role: int
+
+class PaginatedUserResponseValue(BaseModel):
+    totalPages: int
+    data: list[UserData]
+
+class PaginatedUserResponse(BaseModel):
+    value: PaginatedUserResponseValue
+    errors: list[str] | None
+
+class UserResponse(BaseModel):
+    value: UserData
+    errors: list[str] | None
+
+# Recipe
 
 class RecipeData(BaseModel):
     id: UUID
@@ -108,20 +131,44 @@ class RecipeData(BaseModel):
     bookmarked: bool
     user_score: float | None = Field(default=None, ge=1, le=5)
 
-    def __init__(self, r, bookmarked: bool, user_score: float | None = None):
-        self.id = r.id
-        self.source = r.source
-        self.author_id = r.author_id
-        self.date_created = r.date_created
-        self.date_edited = r.date_edited
-        self.rating = r.rating
-        self.status = r.status
-        self.bookmarked = bookmarked
-        self.user_score = user_score
+    def serialize(self) -> dict[str, Any]:
+        return {
+            'id': str(self.id),
+            'source': self.source,
+            'author_id': str(self.author_id),
+            'date_created': self.date_created,
+            'date_edited': self.date_edited,
+            'rating': self.rating,
+            'status': self.status,
+            'bookmarked': self.bookmarked,
+            'user_score': self.user_score
+        }
 
-class ErrorResponse(BaseModel):
-    value: None
-    errors: list[str]
+class PaginatedRecipeResponseValue(BaseModel):
+    totalPages: int
+    data: list[RecipeData]
+
+class PaginatedRecipeResponse(BaseModel):
+    value: PaginatedRecipeResponseValue
+    errors: list[str] | None
+
+class RecipeResponse(BaseModel):
+    value: RecipeData
+    errors: list[str] | None
+
+class RecipeAddRequest(BaseModel):
+    source: str
+    tags: list[str] | None
+
+class RecipeChangeStatusRequest(BaseModel):
+    status: int = Field(ge=0, le=2)
+
+class RecipeSearchRequest(BaseModel):
+    page: int | None = Field(default=1, ge=1)
+    elements: int | None = Field(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE)
+    q: constr(min_length=1, max_length=512)
+
+# Auth
 
 class LoginRequest(BaseModel):
     username: constr(min_length=1, max_length=64)
@@ -132,3 +179,18 @@ class RegistrationRequest(BaseModel):
     password: constr(min_length=1, max_length=128)
     first_name: constr(min_length=1, max_length=64)
     last_name: constr(min_length=1, max_length=64)
+
+class AuthorizationHeader(BaseModel):
+    Authorization: str
+
+# Rating
+
+class RatingRequest(BaseModel):
+    score: float = Field(ge=1, le=5)
+
+class RatingResponseValue(BaseModel):
+    rating: float = Field(ge=0, le=5)
+
+class RatingResponse(BaseModel):
+    value: RatingResponseValue
+    errors: list[str] | None

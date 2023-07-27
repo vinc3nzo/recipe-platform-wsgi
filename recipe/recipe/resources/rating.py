@@ -7,9 +7,15 @@ from sqlalchemy.orm import sessionmaker, Session
 from uuid import UUID
 
 from ..database.models import RatedRecipe, Recipe
-from ..validation import RatedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE
-from ..util import require_auth, serialize, require_fields
+from ..validation import (
+    RatedRecipeCreate, ResponseWrapper, INTERNAL_ERROR_RESPONSE,
+    RatingResponse, RatingRequest, ErrorResponse, PaginationParams
+)
+from ..util import check_auth
 from ..log import logging
+from ..spec import api
+
+from spectree import Response as SpecResponse
 
 class RatingResource:
     
@@ -18,51 +24,79 @@ class RatingResource:
     def __init__(self, db_sessionmaker: sessionmaker[Session]):
         self.db_session = db_sessionmaker
 
-    @falcon.before(require_auth)
+    @api.validate(
+        resp=SpecResponse(
+            HTTP_200=RatingResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
+        query=PaginationParams,
+        path_parameter_descriptions={
+            '_id': 'A UUID that corresponds to a recipe.'
+        }
+    )
+    @falcon.before(check_auth)
     def on_get(self, req: Request, resp: Response, _id: UUID):
         try:
             with self.db_session() as db:
                 recipe = db.scalar(select(Recipe).where(Recipe.id == _id))
 
                 if recipe is None:
-                    resp.media = serialize(ResponseWrapper(value=None, errors=['There is no recipe with such id.']))
+                    resp.media = {
+                        'value': None,
+                        'errors': ['There is no recipe with such id.']
+                    }
                     resp.status = falcon.HTTP_404
                     return
                 
-                resp.media = serialize(ResponseWrapper(
-                    value={
+                resp.media = {
+                    'value': {
                         'rating': recipe.rating
-                    }
-                ))
+                    },
+                    'errors': None
+                }
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)
     
-    @falcon.before(require_auth)
-    @falcon.before(require_fields, ['score'])
+    @api.validate(
+        resp=SpecResponse(
+            HTTP_200=ResponseWrapper,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_404=ErrorResponse,
+            HTTP_500=ErrorResponse
+        ),
+        query=PaginationParams,
+        json=RatingRequest,
+        path_parameter_descriptions={
+            '_id': 'A UUID that corresponds to a recipe.'
+        }
+    )
+    @falcon.before(check_auth)
     def on_post(self, req: Request, resp: Response, _id: UUID):
         try:
             user_id: UUID = req.context.user_id
-            score: float = req.context.body['score']
+            score: float = req.context.json.score
 
             with self.db_session() as db:
                 recipe = db.scalar(select(Recipe).where(Recipe.id == _id))
 
                 if recipe is None:
-                    resp.media = serialize(ResponseWrapper(value=None, errors=['There is no recipe with such id.']))
+                    resp.media = {
+                        'value': None,
+                        'errors': ['There is no recipe with such id.']
+                    }
                     resp.status = falcon.HTTP_404
                     return
                 
                 existing_rating = db.scalar(select(RatedRecipe)
                                             .where((RatedRecipe.recipe_id == _id) & (RatedRecipe.user_id == user_id)))
-
-                if score < 1 or score > 5:
-                    resp.media = serialize(ResponseWrapper(value=None, errors=['The score must be a float value in range [1; 5].']))
-                    resp.status = falcon.HTTP_400
-                    return
                 
                 if existing_rating is not None:
                     db.delete(existing_rating)
@@ -82,10 +116,13 @@ class RatingResource:
                 db.add(recipe)
                 db.commit()
 
-                resp.media = serialize(ResponseWrapper(value=None))
+                resp.media = {
+                    'value': None,
+                    'errors': None
+                }
                 resp.status = falcon.HTTP_200
 
         except Exception as e:
-            resp.media = serialize(INTERNAL_ERROR_RESPONSE)
+            resp.media = INTERNAL_ERROR_RESPONSE
             resp.status = falcon.HTTP_500
             logging.exception(e)
