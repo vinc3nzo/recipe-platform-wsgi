@@ -101,7 +101,7 @@ def check_auth(req: Request, resp: Response, resource, params, allowed_authoriti
         raise Unauthorized('the format of `Authorization` header is invalid')
 
     token = split[1].strip()
-    secret = os.environ.get('APP_SECRET')
+    secret = os.environ.get('RECIPE_APP_SECRET')
 
     try:
         payload = jwt.decode(token, secret, algorithms=['HS256'])

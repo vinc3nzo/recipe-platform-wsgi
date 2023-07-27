@@ -11,11 +11,11 @@ BEARER_TOKEN_EXPIRATION_TIME: int = 60 * 60 * 24 * 30 # sec
 def get_admin_token() -> str:
     payload = {
         'user_id': str(uuid4()),
-        'role': Authority.ADMIN,
+        'role': Authority.ADMIN | Authority.MODERATOR | Authority.USER,
         'exp': datetime.now() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
     }
 
-    secret: str = os.environ.get('APP_SECRET')
+    secret: str = os.environ.get('RECIPE_APP_SECRET')
     token: str = jwt.encode(payload, secret, algorithm="HS256")
 
     return token
@@ -27,7 +27,7 @@ def authorize_user(id: UUID, role: int) -> str:
         'exp': datetime.now() + timedelta(seconds=BEARER_TOKEN_EXPIRATION_TIME)
     }
 
-    secret: str = os.environ.get('APP_SECRET')
+    secret: str = os.environ.get('RECIPE_APP_SECRET')
     token: str = jwt.encode(payload, secret, algorithm="HS256")
 
     return token
