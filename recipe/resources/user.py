@@ -4,7 +4,7 @@ from falcon import Request, Response
 from sqlalchemy import select, func
 from sqlalchemy.orm import sessionmaker, Session
 
-from ..util import check_auth, serialize
+from ..util import check_auth
 
 from ..database.models import User, Authority
 
@@ -28,6 +28,41 @@ class UserResource:
 
     def __init__(self, db_sessionmaker: sessionmaker):
         self.db_session = db_sessionmaker
+
+    @api.validate(
+        resp=SpecResponse(
+            HTTP_200=UserResponse,
+            HTTP_401=ErrorResponse,
+            HTTP_403=ErrorResponse,
+            HTTP_500=ErrorResponse
+        )
+    )
+    @falcon.before(check_auth)
+    def on_get_my(self, req: Request, resp: Response):
+        try:
+            user_id: UUID = req.context.user_id
+
+            with self.db_session() as db:
+                result = db.execute(select(User).where(User.id == user_id))
+                user = result.scalar()
+
+                if user is None:
+                    resp.media = {
+                        'value': None,
+                        'errors': ['No user with such id was found.']
+                    }
+                    resp.status = falcon.HTTP_404
+                    return
+
+                resp.media = {
+                    'value': user.serialize(),
+                    'errors': None
+                }
+                resp.status = falcon.HTTP_200
+        except Exception as e:
+            resp.media = INTERNAL_ERROR_RESPONSE
+            resp.status = falcon.HTTP_500
+            logging.exception(e)
 
     @api.validate(
         query=PaginationParams,
@@ -55,7 +90,8 @@ class UserResource:
                         'data': [
                             user.serialize() for user in users
                         ]
-                    }
+                    },
+                    'errors': None
                 }
                 resp.status = falcon.HTTP_200
 

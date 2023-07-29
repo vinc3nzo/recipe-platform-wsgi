@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import falcon.asgi
 from falcon.asgi import Request, Response
 
@@ -10,45 +8,6 @@ import os
 
 from .database.models import Authority
 from .validation import ResponseWrapper
-
-def serialize(obj: object) -> list | dict[str, dict | list | str | int | float | None]:
-    """Convert any complex Python object into its
-    hopefully JSON-serializable, dictionary form.
-    
-    If the `obj` or one of its fields and subfields has a method
-    named `serialize()`, then it will be called.
-    
-    Cyclic references will cause the function to enter an
-    infinite loop. Use with caution."""
-
-    if getattr(obj, 'serialize', False):
-        return obj.serialize() # if the `obj` has `serialize()` method, invoke it
-
-    if isinstance(obj, UUID):
-        return str(obj)
-
-    if isinstance(obj, (list, tuple)):
-        return [serialize(e) for e in obj] # collections are returned as lists
-
-    if isinstance(obj, (str, int, float)):
-        return obj # primitive types are returned as-is
-    
-    if isinstance(obj, datetime):
-        return obj.timestamp() # serialize time as Unix timestamp
-
-    if isinstance(obj, dict):
-        d = obj
-    else:
-        d = obj.__dict__
-
-    res = {}
-    for k in d:
-        if not k.startswith('_'):
-            if d[k] is None:
-                res[k] = None
-            else:
-                res[k] = serialize(d[k])
-    return res
 
 class FieldsMissing(falcon.HTTPBadRequest):
     fields: list[str]
@@ -70,14 +29,14 @@ def require_fields(req: Request, resp: Response, resource, params, required: lis
 
 def handle_fields_missing(req: Request, resp: Response, ex: FieldsMissing, params):
     resp.status = falcon.HTTP_400
-    resp.media = serialize(ResponseWrapper(
-        value=None,
-        errors=[
+    resp.media = {
+        'value': None,
+        'errors': [
             'The following fields are required: '
             + ''.join(['`' + f + '`, ' for f in ex.fields[:-1]])
             + '`' + ex.fields[-1] + '`.'
         ]
-    ))
+    }
 
 class Unauthorized(falcon.HTTPForbidden):
     reason: str
@@ -94,7 +53,7 @@ class AccessDenied(falcon.HTTPForbidden):
 def check_auth(req: Request, resp: Response, resource, params, allowed_authorities: int = Authority.USER | Authority.MODERATOR | Authority.ADMIN):
     auth_header: str | None = req.auth
     if auth_header is None:
-        raise Unauthorized('use the `Authorization` header to pass the authorization token')
+        raise Unauthorized('use `Authorization` header to pass the authorization token')
     
     split = auth_header.split()
     if len(split) != 2 or split[0].lower() != 'bearer':
@@ -144,10 +103,10 @@ class PaginationError(falcon.HTTPBadRequest):
 
 def handle_pagination_error(req: Request, resp: Response, ex: PaginationError, params):
     resp.status = falcon.HTTP_400
-    resp.media = serialize(ResponseWrapper(
-        value=None,
-        errors=ex.msgs
-    ))
+    resp.media = {
+        'value': None,
+        'errors': ex.msgs
+    }
 
 def pagination(req: Request, resp: Response, resource, params):
     query_params = req.params

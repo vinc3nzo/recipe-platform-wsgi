@@ -31,6 +31,8 @@ if PYDANTIC2:
 else:
     from pydantic import BaseModel, Field, constr
 
+import falcon
+from datetime import datetime
 from uuid import UUID
 
 DEFAULT_PAGE_SIZE: int = 20
@@ -103,7 +105,7 @@ class UserData(BaseModel):
     username: str
     first_name: str
     last_name: str
-    date_registered: float
+    date_registered: str
     role: int
 
 class PaginatedUserResponseValue(BaseModel):
@@ -124,8 +126,8 @@ class RecipeData(BaseModel):
     id: UUID
     source: str
     author_id: UUID
-    date_created: float
-    date_edited: float
+    date_created: str
+    date_edited: str
     rating: float
     status: int
     bookmarked: bool

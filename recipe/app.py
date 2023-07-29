@@ -47,6 +47,7 @@ def create_app(db_url: str) -> falcon.asgi.App:
 
     app.add_route('/user', user_resource) # GET
     app.add_route('/user/{_id:uuid}', user_resource, suffix='by_id') # GET, PATCH
+    app.add_route('/user/my', user_resource, suffix='my') # GET
 
     app.add_route('/recipe', recipe_resource) # GET, POST
     app.add_route('/recipe/{_id:uuid}', recipe_resource, suffix='by_id') # GET, PATCH[MODERATOR, ADMIN]
@@ -58,7 +59,7 @@ def create_app(db_url: str) -> falcon.asgi.App:
     app.add_route('/recipe/{_id:uuid}/rating', rating_resource) # GET, POST
     app.add_route('/recipe/{_id:uuid}/bookmark', bookmark_resource, suffix='bookmark') # POST, DELETE
 
-    app.add_route('/bookmark', bookmark_resource) # GET, POST, DELETE
+    app.add_route('/bookmark', bookmark_resource) # GET
 
     app.add_route('/auth/login', auth_resource, suffix='login') # POST
     app.add_route('/auth/register', auth_resource, suffix='register') # POST

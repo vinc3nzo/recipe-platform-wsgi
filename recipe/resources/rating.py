@@ -66,7 +66,7 @@ class RatingResource:
     
     @api.validate(
         resp=SpecResponse(
-            HTTP_200=ResponseWrapper,
+            HTTP_201=ResponseWrapper,
             HTTP_401=ErrorResponse,
             HTTP_403=ErrorResponse,
             HTTP_404=ErrorResponse,
@@ -120,7 +120,7 @@ class RatingResource:
                     'value': None,
                     'errors': None
                 }
-                resp.status = falcon.HTTP_200
+                resp.status = falcon.HTTP_201
 
         except Exception as e:
             resp.media = INTERNAL_ERROR_RESPONSE

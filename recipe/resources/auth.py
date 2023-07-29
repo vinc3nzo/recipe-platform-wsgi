@@ -4,7 +4,6 @@ from falcon import Request, Response
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import select
 
-from ..util import serialize
 from ..database.models import User, UserPassword, Authority
 from ..spec import api
 from ..validation import (

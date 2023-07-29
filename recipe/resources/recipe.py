@@ -62,8 +62,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -192,8 +192,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -255,8 +255,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -321,8 +321,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -338,7 +338,8 @@ class RecipeResource:
                     'value': {
                         'totalPages': math.ceil(total_records / elements),
                         'data': [d.serialize() for d in res_data]
-                    }
+                    },
+                    'errors': None
                 }
                 resp.status = falcon.HTTP_200
 
@@ -379,8 +380,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -396,7 +397,8 @@ class RecipeResource:
                     'value': {
                         'totalPages': math.ceil(total_records / elements),
                         'data': [d.serialize() for d in res_data]
-                    }
+                    },
+                    'errors': None
                 }
                 resp.status = falcon.HTTP_200             
             
@@ -437,8 +439,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,
@@ -496,8 +498,8 @@ class RecipeResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=bookmark_record is not None,

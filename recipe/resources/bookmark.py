@@ -60,8 +60,8 @@ class BookmarkResource:
                         id=recipe.id,
                         source=recipe.source,
                         author_id=recipe.author_id,
-                        date_created=recipe.date_created,
-                        date_edited=recipe.date_edited,
+                        date_created=falcon.dt_to_http(recipe.date_created),
+                        date_edited=falcon.dt_to_http(recipe.date_edited),
                         rating=recipe.rating,
                         status=recipe.status,
                         bookmarked=True,
@@ -77,7 +77,8 @@ class BookmarkResource:
                     'value': {
                         'totalPages': math.ceil(total_records / elements),
                         'data': [d.serialize() for d in res_data]
-                    }
+                    },
+                    'errors': None
                 }
         except Exception as e:
             resp.media = INTERNAL_ERROR_RESPONSE
@@ -136,7 +137,7 @@ class BookmarkResource:
         
                 resp.media = {
                     'value': None,
-                    'error': None
+                    'errors': None
                 }
                 resp.status = falcon.HTTP_201
         except Exception as e:
