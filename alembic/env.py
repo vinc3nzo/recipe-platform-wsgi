@@ -15,7 +15,7 @@ if db_password is None:
     raise Exception('Please, set the `RECIPE_DATABASE_PASSWORD` environment variable. You may use the `.env` file for your convenience.')
 
 db_user = os.environ.get('RECIPE_DATABASE_USER', 'postgres')
-db_name = os.environ.get('RECIPE_DATABASE_NAME', 'recipe-wsgi')
+db_name = os.environ.get('RECIPE_DATABASE_NAME', 'recipe-postgres')
 db_host = os.environ.get('RECIPE_DATABASE_HOST', 'localhost')
 db_port = os.environ.get('RECIPE_DATABASE_PORT', '5432')
 
@@ -34,7 +34,8 @@ if config.config_file_name is not None:
 
 # check if the database exists
 from recipe.database.database import validate_db_presence
-validate_db_presence('postgresql+psycopg2://postgres:1234@localhost:5432/recipe-wsgi')
+db_url = config.get_main_option('sqlalchemy.url')
+validate_db_presence(db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
